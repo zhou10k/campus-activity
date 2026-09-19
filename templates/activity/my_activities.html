@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}我的发布 - 校园活动管理系统{% endblock %}
+
+{% block content %}
+<h2>我发布的活动</h2>
+
+{% if activities %}
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>标题</th>
+            <th>开始时间</th>
+            <th>地点</th>
+            <th>状态</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for a in activities %}
+        <tr>
+            <td>{{ a.title }}</td>
+            <td>{{ a.start_time.strftime('%Y-%m-%d %H:%M') if a.start_time else '未定' }}</td>
+            <td>{{ a.location or '' }}</td>
+            <td>
+                {% if a.status == 'published' %}<span class="tag tag-success">已发布</span>
+                {% elif a.status == 'closed' %}<span class="tag tag-muted">已结束</span>
+                {% elif a.status == 'cancelled' %}<span class="tag tag-danger">已取消</span>
+                {% else %}<span class="tag tag-muted">{{ a.status }}</span>{% endif %}
+            </td>
+            <td><a href="{{ url_for('activity.detail', activity_id=a.id) }}" class="btn btn-link">查看</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+    <div class="empty-state"><p>您还没有发布过活动</p></div>
+{% endif %}
+{% endblock %}

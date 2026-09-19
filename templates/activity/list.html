@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}活动列表 - 校园活动管理系统{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>校园活动</h2>
+    {% if session.get('role') == 'teacher' %}
+        <a href="{{ url_for('activity.new_activity') }}" class="btn btn-primary">发布活动</a>
+    {% endif %}
+</div>
+
+{% if pagination.items %}
+    <div class="activity-grid">
+        {% for activity in pagination.items %}
+            <div class="activity-card">
+                <h3 class="activity-title">
+                    <a href="{{ url_for('activity.detail', activity_id=activity.id) }}">{{ activity.title }}</a>
+                </h3>
+                <p class="activity-meta">
+                    <span>时间:{{ activity.start_time.strftime('%Y-%m-%d %H:%M') if activity.start_time else '未定' }}
+                        ~ {{ activity.end_time.strftime('%H:%M') if activity.end_time else '' }}</span>
+                </p>
+                <p class="activity-meta">地点:{{ activity.location or '未定' }}</p>
+                {% if activity.status == 'published' %}
+                    <span class="tag tag-success">进行中</span>
+                {% elif activity.status == 'closed' %}
+                    <span class="tag tag-muted">已结束</span>
+                {% endif %}
+                <a href="{{ url_for('activity.detail', activity_id=activity.id) }}" class="btn btn-link">查看详情 &raquo;</a>
+            </div>
+        {% endfor %}
+    </div>
+
+    {% if pagination.pages > 1 %}
+        <nav class="pagination">
+            {% if pagination.has_prev %}
+                <a href="{{ url_for('activity.list_activities', page=pagination.prev_num) }}" class="page-link">&laquo; 上一页</a>
+            {% endif %}
+            {% for p in pagination.iter_pages() %}
+                {% if p %}
+                    {% if p == pagination.page %}
+                        <span class="page-link active">{{ p }}</span>
+                    {% else %}
+                        <a href="{{ url_for('activity.list_activities', page=p) }}" class="page-link">{{ p }}</a>
+                    {% endif %}
+                {% else %}
+                    <span class="page-link">...</span>
+                {% endif %}
+            {% endfor %}
+            {% if pagination.has_next %}
+                <a href="{{ url_for('activity.list_activities', page=pagination.next_num) }}" class="page-link">下一页 &raquo;</a>
+            {% endif %}
+        </nav>
+    {% endif %}
+{% else %}
+    <div class="empty-state">
+        <p>暂无可用活动</p>
+    </div>
+{% endif %}
+{% endblock %}

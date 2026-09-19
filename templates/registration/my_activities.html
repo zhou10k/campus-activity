@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}我的活动 - 校园活动管理系统{% endblock %}
+
+{% block content %}
+<h2>我的活动</h2>
+
+{% if registrations %}
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>活动标题</th>
+            <th>开始时间</th>
+            <th>地点</th>
+            <th>状态</th>
+            <th>报名时间</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for reg in registrations %}
+        <tr>
+            <td>{{ reg.activity.title }}</td>
+            <td>{{ reg.activity.start_time.strftime('%Y-%m-%d %H:%M') if reg.activity.start_time else '未定' }}</td>
+            <td>{{ reg.activity.location or '' }}</td>
+            <td>
+                {% if reg.activity.status == 'published' %}<span class="tag tag-success">进行中</span>
+                {% else %}<span class="tag tag-muted">{{ reg.activity.status }}</span>{% endif %}
+            </td>
+            <td>{{ reg.registered_at.strftime('%Y-%m-%d %H:%M') if reg.registered_at else '' }}</td>
+            <td>
+                <a href="{{ url_for('activity.detail', activity_id=reg.activity.id) }}" class="btn btn-link">查看</a>
+                <form action="{{ url_for('registration.cancel', activity_id=reg.activity.id) }}" method="POST"
+                      style="display:inline-block;"
+                      onsubmit="return confirm('确定取消报名?')">
+                    <button type="submit" class="btn btn-danger btn-small">取消报名</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+    <div class="empty-state"><p>您还没有报名任何活动</p></div>
+{% endif %}
+{% endblock %}

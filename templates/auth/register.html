@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}注册 - 校园活动管理系统{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    <h2>用户注册</h2>
+
+    {% if errors %}
+        <div class="alert alert-danger">
+            {% for error in errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form action="{{ url_for('auth.register') }}" method="POST" id="registerForm">
+        <div class="form-group">
+            <label for="account">学号 / 工号</label>
+            <input type="text" id="account" name="account" required
+                   placeholder="请输入学号或工号"
+                   value="{{ account or '' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="name">姓名</label>
+            <input type="text" id="name" name="name" required
+                   value="{{ name or '' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="password">密码</label>
+            <input type="password" id="password" name="password" required minlength="6">
+        </div>
+
+        <div class="form-group">
+            <label for="confirm_password">确认密码</label>
+            <input type="password" id="confirm_password" name="confirm_password" required minlength="6">
+        </div>
+
+        <div class="form-group">
+            <label>角色</label>
+            <div class="radio-group">
+                <label class="radio-label">
+                    <input type="radio" name="role" value="student"
+                           {% if not role or role == 'student' %}checked{% endif %}>
+                    学生
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="role" value="teacher"
+                           {% if role == 'teacher' %}checked{% endif %}>
+                    教师
+                </label>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">注册</button>
+
+        <p class="auth-link">已有账号?<a href="{{ url_for('auth.login') }}">去登录</a></p>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('registerForm').addEventListener('submit', function (e) {
+    var pwd = document.getElementById('password').value;
+    var cpwd = document.getElementById('confirm_password').value;
+    if (pwd !== cpwd) {
+        alert('两次输入的密码不一致');
+        e.preventDefault();
+    }
+});
+</script>
+{% endblock %}

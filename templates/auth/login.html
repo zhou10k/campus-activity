@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}登录 - 校园活动管理系统{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    <h2>用户登录</h2>
+
+    {% if errors %}
+        <div class="alert alert-danger">
+            {% for error in errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form action="{{ url_for('auth.login') }}" method="POST">
+        <div class="form-group">
+            <label for="account">账号</label>
+            <input type="text" id="account" name="account" required
+                   placeholder="请输入学号或工号"
+                   value="{{ account or '' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="password">密码</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">登录</button>
+
+        <p class="auth-link">还没有账号?<a href="{{ url_for('auth.register') }}">去注册</a></p>
+    </form>
+</div>
+{% endblock %}

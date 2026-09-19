@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}报名成功 - 校园活动管理系统{% endblock %}
+
+{% block content %}
+<div class="success-card">
+    <div class="success-icon">✓</div>
+    <h2>报名成功</h2>
+    <p>您已成功报名活动:<strong>{{ activity.title }}</strong></p>
+    <p class="text-muted">开始时间:{{ activity.start_time.strftime('%Y-%m-%d %H:%M') if activity.start_time else '未定' }}</p>
+    <p class="text-muted">地点:{{ activity.location or '未定' }}</p>
+
+    <div class="success-actions">
+        <a href="{{ url_for('activity.list_activities') }}" class="btn btn-primary">返回活动列表</a>
+        <a href="{{ url_for('registration.my_activities') }}" class="btn btn-secondary">查看我的活动</a>
+    </div>
+</div>
+{% endblock %}

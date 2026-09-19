@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}{{ activity.title }} - 校园活动管理系统{% endblock %}
+
+{% block content %}
+<div class="detail-card">
+    <div class="detail-header">
+        <h2>{{ activity.title }}</h2>
+        {% if activity.status == 'published' %}
+            <span class="tag tag-success">进行中</span>
+        {% elif activity.status == 'closed' %}
+            <span class="tag tag-muted">已结束</span>
+        {% elif activity.status == 'cancelled' %}
+            <span class="tag tag-danger">已取消</span>
+        {% else %}
+            <span class="tag tag-muted">草稿</span>
+        {% endif %}
+    </div>
+
+    <div class="detail-grid">
+        <div><strong>时间:</strong>
+            {{ activity.start_time.strftime('%Y-%m-%d %H:%M') if activity.start_time else '未定' }}
+            ~
+            {{ activity.end_time.strftime('%Y-%m-%d %H:%M') if activity.end_time else '未定' }}
+        </div>
+        <div><strong>地点:</strong>{{ activity.location or '未定' }}</div>
+        <div><strong>主办方:</strong>{{ teacher_name }}</div>
+        <div><strong>报名截止:</strong>
+            {{ activity.register_deadline.strftime('%Y-%m-%d %H:%M') if activity.register_deadline else '未定' }}
+        </div>
+    </div>
+
+    <div class="capacity-bar">
+        <div class="capacity-info">已报 {{ registered_count }} / {{ activity.capacity }} 人</div>
+        <div class="capacity-track">
+            {% set pct = (registered_count * 100 / activity.capacity) if activity.capacity else 0 %}
+            <div class="capacity-fill {% if registered_count >= activity.capacity %}capacity-full{% endif %}"
+                 style="width: {{ pct }}%"></div>
+        </div>
+    </div>
+
+    <div class="detail-desc">
+        <h4>活动简介</h4>
+        <p>{{ activity.description or '暂无简介' }}</p>
+    </div>
+
+    <div class="action-area">
+        {% if session.get('role') == 'student' %}
+            {% if is_registered %}
+                <div class="alert alert-success">您已报名此活动</div>
+                <form action="{{ url_for('registration.cancel', activity_id=activity.id) }}" method="POST"
+                      onsubmit="return confirm('确定要取消报名吗?')">
+                    <button type="submit" class="btn btn-danger">取消报名</button>
+                </form>
+            {% elif activity.status == 'published' and registered_count < activity.capacity %}
+                <form action="{{ url_for('registration.register', activity_id=activity.id) }}" method="POST"
+                      onsubmit="return confirm('确定要报名此活动吗?')">
+                    <button type="submit" class="btn btn-success btn-large">立即报名</button>
+                </form>
+            {% elif registered_count >= activity.capacity %}
+                <div class="alert alert-warning">本活动名额已满</div>
+            {% else %}
+                <div class="alert alert-warning">该活动当前不可报名</div>
+            {% endif %}
+        {% elif session.get('role') == 'teacher' and session.get('user_id') == activity.teacher_id %}
+            <div class="alert alert-info">这是您发布的活动</div>
+        {% endif %}
+    </div>
+
+    <a href="{{ url_for('activity.list_activities') }}" class="btn btn-link">&laquo; 返回活动列表</a>
+</div>
+{% endblock %}
