@@ -94,6 +94,11 @@ def login():
             flash('账号或密码错误', 'danger')
             return render_template('auth/login.html', account=account)
 
+        # V2.0：账号状态校验（账号能否登录，与教师审核状态无关）
+        if not user.can_login():
+            flash('该账号已被停用，请联系管理员', 'danger')
+            return render_template('auth/login.html', account=account)
+
         # 教师登录时的审核状态校验
         if user.role == 'teacher':
             if user.status == 'pending':

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}活动管理 - 校园活动管理系统{% endblock %}
+
+{% block content %}
+<h2>平台活动管理</h2>
+<p class="hint">可查看平台全部活动（含其他教师的活动）。下架处置仅改变活动状态，不影响报名名单与候补队列。</p>
+
+{% if activities %}
+<table class="data-table">
+    <thead>
+        <tr><th>标题</th><th>主办教师</th><th>开始时间</th><th>名额</th><th>状态</th><th>操作</th></tr>
+    </thead>
+    <tbody>
+        {% for a in activities %}
+        <tr>
+            <td>{{ a.title }}</td>
+            <td>{{ a.teacher.name if a.teacher else '-' }}</td>
+            <td>{{ a.start_time.strftime('%Y-%m-%d %H:%M') if a.start_time else '未定' }}</td>
+            <td>{{ a.confirmed_count }}/{{ a.capacity }} · 候补 {{ a.waitlist_count }}</td>
+            <td>
+                {% if a.status == 'published' %}<span class="tag tag-success">已发布</span>
+                {% elif a.status == 'delisted' %}<span class="tag tag-danger">已下架</span>
+                {% elif a.status == 'cancelled' %}<span class="tag tag-danger">已取消</span>
+                {% elif a.status == 'closed' %}<span class="tag tag-muted">已结束</span>
+                {% else %}<span class="tag tag-muted">{{ a.status }}</span>{% endif %}
+            </td>
+            <td>
+                {% if a.status == 'delisted' %}
+                    <form action="{{ url_for('admin.restore_activity', activity_id=a.id) }}" method="POST" style="display:inline-block;">
+                        <button type="submit" class="btn btn-success btn-small">恢复上架</button>
+                    </form>
+                {% else %}
+                    <form action="{{ url_for('admin.delist_activity', activity_id=a.id) }}" method="POST" style="display:inline-block;"
+                          onsubmit="return this.reason.value.trim() !== '' || (alert('请填写下架原因'), false)">
+                        <input type="text" name="reason" placeholder="下架原因">
+                        <button type="submit" class="btn btn-danger btn-small">下架</button>
+                    </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+    <div class="empty-state"><p>平台暂无活动</p></div>
+{% endif %}
+{% endblock %}

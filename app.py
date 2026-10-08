@@ -19,11 +19,13 @@ def create_app():
     from blueprints.admin import admin_bp
     from blueprints.activity import activity_bp
     from blueprints.registration import registration_bp
+    from blueprints.teacher import teacher_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(activity_bp)
     app.register_blueprint(registration_bp)
+    app.register_blueprint(teacher_bp)
 
     # 根路径跳转
     @app.route('/')

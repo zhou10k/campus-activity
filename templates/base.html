@@ -20,12 +20,14 @@
                     <li><a href="{{ url_for('auth.logout') }}">登出</a></li>
                 {% elif session.get('role') == 'teacher' %}
                     <li><a href="{{ url_for('activity.new_activity') }}">发布活动</a></li>
-                    <li><a href="{{ url_for('activity.my_activities') }}">我的发布</a></li>
+                    <li><a href="{{ url_for('teacher.my_activities') }}">我的发布</a></li>
                     <li><a href="{{ url_for('activity.list_activities') }}">活动列表</a></li>
                     <li><a href="{{ url_for('auth.logout') }}">登出</a></li>
                 {% elif session.get('role') == 'admin' %}
                     <li><a href="{{ url_for('activity.list_activities') }}">活动列表</a></li>
+                    <li><a href="{{ url_for('admin.activity_list') }}">活动管理</a></li>
                     <li><a href="{{ url_for('admin.audit_list') }}">教师审核</a></li>
+                    <li><a href="{{ url_for('admin.user_list') }}">用户管理</a></li>
                     <li><a href="{{ url_for('auth.logout') }}">登出</a></li>
                 {% endif %}
             </ul>
@@ -50,7 +52,7 @@
     </main>
 
     <footer class="site-footer">
-        <p>校园活动管理系统 V1.0 &copy; 三人行小组</p>
+        <p>校园活动管理系统 V2.0 &copy; 三人行小组</p>
     </footer>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>

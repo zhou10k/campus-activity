@@ -9,6 +9,14 @@
     {% endif %}
 </div>
 
+<form method="GET" action="{{ url_for('activity.list_activities') }}" class="search-bar">
+    <input type="text" name="q" value="{{ keyword or '' }}" placeholder="搜索活动名称或地点...">
+    <button type="submit" class="btn btn-primary">搜索</button>
+    {% if keyword %}
+        <a href="{{ url_for('activity.list_activities') }}" class="btn btn-link">清除</a>
+    {% endif %}
+</form>
+
 {% if pagination.items %}
     <div class="activity-grid">
         {% for activity in pagination.items %}
@@ -34,21 +42,21 @@
     {% if pagination.pages > 1 %}
         <nav class="pagination">
             {% if pagination.has_prev %}
-                <a href="{{ url_for('activity.list_activities', page=pagination.prev_num) }}" class="page-link">&laquo; 上一页</a>
+                <a href="{{ url_for('activity.list_activities', page=pagination.prev_num, q=keyword) }}" class="page-link">&laquo; 上一页</a>
             {% endif %}
             {% for p in pagination.iter_pages() %}
                 {% if p %}
                     {% if p == pagination.page %}
                         <span class="page-link active">{{ p }}</span>
                     {% else %}
-                        <a href="{{ url_for('activity.list_activities', page=p) }}" class="page-link">{{ p }}</a>
+                        <a href="{{ url_for('activity.list_activities', page=p, q=keyword) }}" class="page-link">{{ p }}</a>
                     {% endif %}
                 {% else %}
                     <span class="page-link">...</span>
                 {% endif %}
             {% endfor %}
             {% if pagination.has_next %}
-                <a href="{{ url_for('activity.list_activities', page=pagination.next_num) }}" class="page-link">下一页 &raquo;</a>
+                <a href="{{ url_for('activity.list_activities', page=pagination.next_num, q=keyword) }}" class="page-link">下一页 &raquo;</a>
             {% endif %}
         </nav>
     {% endif %}

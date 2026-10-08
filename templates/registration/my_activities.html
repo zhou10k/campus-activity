@@ -11,7 +11,7 @@
             <th>活动标题</th>
             <th>开始时间</th>
             <th>地点</th>
-            <th>状态</th>
+            <th>报名状态</th>
             <th>报名时间</th>
             <th>操作</th>
         </tr>
@@ -23,17 +23,32 @@
             <td>{{ reg.activity.start_time.strftime('%Y-%m-%d %H:%M') if reg.activity.start_time else '未定' }}</td>
             <td>{{ reg.activity.location or '' }}</td>
             <td>
-                {% if reg.activity.status == 'published' %}<span class="tag tag-success">进行中</span>
-                {% else %}<span class="tag tag-muted">{{ reg.activity.status }}</span>{% endif %}
+                {% if reg.status == 'pending' %}
+                    <span class="tag tag-info">待审核</span>
+                {% elif reg.status == 'confirmed' %}
+                    <span class="tag tag-success">正式参加</span>
+                {% elif reg.status == 'waitlist' %}
+                    <span class="tag tag-warning">候补中（第 {{ reg.waitlist_no }} 位）</span>
+                {% elif reg.status == 'rejected' %}
+                    <span class="tag tag-danger" title="{{ reg.reject_reason or '' }}">未通过</span>
+                {% else %}
+                    <span class="tag tag-muted">{{ reg.status }}</span>
+                {% endif %}
             </td>
             <td>{{ reg.registered_at.strftime('%Y-%m-%d %H:%M') if reg.registered_at else '' }}</td>
             <td>
                 <a href="{{ url_for('activity.detail', activity_id=reg.activity.id) }}" class="btn btn-link">查看</a>
-                <form action="{{ url_for('registration.cancel', activity_id=reg.activity.id) }}" method="POST"
+                {% if reg.status in ('confirmed', 'waitlist') %}
+                <form action="{{ url_for('registration.cancel_mine', reg_id=reg.id) }}" method="POST"
                       style="display:inline-block;"
-                      onsubmit="return confirm('确定取消报名?')">
-                    <button type="submit" class="btn btn-danger btn-small">取消报名</button>
+                      onsubmit="return confirm('{% if reg.status == 'confirmed' %}取消后名额将自动释放给候补同学，确定吗?{% else %}确定退出候补队列?{% endif %}')">
+                    <button type="submit" class="btn btn-danger btn-small">
+                        {% if reg.status == 'confirmed' %}取消报名{% else %}退出候补{% endif %}
+                    </button>
                 </form>
+                {% elif reg.status == 'rejected' and reg.reject_reason %}
+                    <span class="hint">原因：{{ reg.reject_reason }}</span>
+                {% endif %}
             </td>
         </tr>
         {% endfor %}

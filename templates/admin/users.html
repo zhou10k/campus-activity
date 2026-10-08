@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}用户管理 - 校园活动管理系统{% endblock %}
+
+{% block content %}
+<h2>用户管理</h2>
+<p class="hint">账号状态表示「能否登录」，与教师审核状态（能否发布活动）相互独立。</p>
+
+{% if users %}
+<table class="data-table">
+    <thead>
+        <tr><th>姓名</th><th>账号</th><th>角色</th><th>教师审核状态</th><th>账号状态</th><th>操作</th></tr>
+    </thead>
+    <tbody>
+        {% for u in users %}
+        <tr>
+            <td>{{ u.name }}</td>
+            <td>{{ u.account }}</td>
+            <td>{{ u.role }}</td>
+            <td>
+                {% if u.role == 'teacher' %}
+                    {% if u.status == 'approved' %}<span class="tag tag-success">已通过</span>
+                    {% elif u.status == 'pending' %}<span class="tag tag-warning">待审核</span>
+                    {% else %}<span class="tag tag-danger">未通过</span>{% endif %}
+                {% else %}
+                    <span class="tag tag-muted">-</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if u.account_status == 'active' %}<span class="tag tag-success">正常</span>
+                {% else %}<span class="tag tag-danger">已停用</span>{% endif %}
+            </td>
+            <td>
+                <form action="{{ url_for('admin.toggle_account', user_id=u.id) }}" method="POST" style="display:inline-block;">
+                    {% if u.account_status == 'active' %}
+                        <button type="submit" class="btn btn-danger btn-small">停用</button>
+                    {% else %}
+                        <button type="submit" class="btn btn-success btn-small">恢复</button>
+                    {% endif %}
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+    <div class="empty-state"><p>暂无用户</p></div>
+{% endif %}
+{% endblock %}

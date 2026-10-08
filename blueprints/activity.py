@@ -14,7 +14,10 @@ activity_bp = Blueprint('activity', __name__)
 
 @activity_bp.route('/activities')
 def list_activities():
-    """活动列表 - 仅展示已发布 (REQ-06)"""
+    """活动列表 - 仅展示已发布 (REQ-06)
+
+    V2.0：支持关键词搜索与按状态筛选；下架(delisted)活动不展示。
+    """
     try:
         page = int(request.args.get('page', 1))
     except ValueError:
@@ -24,41 +27,50 @@ def list_activities():
     except ValueError:
         per_page = 10
 
-    pagination = Activity.query.filter_by(status='published') \
-        .order_by(Activity.start_time.asc()) \
+    keyword = (request.args.get('q') or '').strip()
+
+    query = Activity.query.filter_by(status='published')
+    if keyword:
+        like = f'%{keyword}%'
+        query = query.filter(
+            db.or_(Activity.title.like(like), Activity.location.like(like))
+        )
+
+    pagination = query.order_by(Activity.start_time.asc()) \
         .paginate(page=page, per_page=per_page, error_out=False)
 
-    return render_template('activity/list.html', pagination=pagination)
+    return render_template('activity/list.html', pagination=pagination, keyword=keyword)
 
 
 @activity_bp.route('/activity/<int:activity_id>')
 def detail(activity_id):
     """活动详情 (REQ-07)"""
     activity = Activity.query.get(activity_id)
-    if not activity or activity.status == 'cancelled':
-        flash('活动不存在或已取消', 'warning')
+    # 已取消 / 已下架 的活动对学生不可见
+    if not activity or activity.status in ('cancelled', 'delisted'):
+        flash('活动不存在或已下架', 'warning')
         return redirect(url_for('activity.list_activities'))
 
     teacher_name = activity.teacher.name if activity.teacher else '未知'
-    registered_count = Registration.query.filter_by(
-        activity_id=activity_id, status='registered'
-    ).count()
+    registered_count = activity.confirmed_count
 
-    # 当前学生是否已报名
-    is_registered = False
+    # V2.0：当前学生的报名状态（四态之一或 None）
+    my_status = None
     if session.get('role') == 'student' and session.get('user_id'):
-        is_registered = Registration.query.filter_by(
-            activity_id=activity_id,
-            student_id=session['user_id'],
-            status='registered',
-        ).first() is not None
+        reg = Registration.query.filter(
+            Registration.activity_id == activity_id,
+            Registration.student_id == session['user_id'],
+            Registration.status.in_(('pending', 'confirmed', 'waitlist')),
+        ).first()
+        if reg:
+            my_status = reg.status
 
     return render_template(
         'activity/detail.html',
         activity=activity,
         teacher_name=teacher_name,
         registered_count=registered_count,
-        is_registered=is_registered,
+        my_status=my_status,
     )
 
 
@@ -155,6 +167,9 @@ def new_activity():
             register_deadline=register_deadline,
             teacher_id=current_user.id,
             status='published',
+            # V2.0 新增：资格条件与审核开关
+            eligibility=(request.form.get('eligibility') or '').strip() or None,
+            require_review=(request.form.get('require_review') == 'on'),
         )
         db.session.add(activity)
         db.session.commit()
@@ -163,12 +178,3 @@ def new_activity():
         return redirect(url_for('activity.detail', activity_id=activity.id))
 
     return render_template('activity/new.html', errors=None, form=None)
-
-
-@activity_bp.route('/teacher/activities')
-@require_role('teacher')
-def my_activities():
-    """我发布的活动列表"""
-    activities = Activity.query.filter_by(teacher_id=session['user_id']) \
-        .order_by(Activity.created_at.desc()).all()
-    return render_template('activity/my_activities.html', activities=activities)

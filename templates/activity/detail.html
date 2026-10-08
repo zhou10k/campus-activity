@@ -9,10 +9,15 @@
             <span class="tag tag-success">进行中</span>
         {% elif activity.status == 'closed' %}
             <span class="tag tag-muted">已结束</span>
+        {% elif activity.status == 'delisted' %}
+            <span class="tag tag-danger">已下架</span>
         {% elif activity.status == 'cancelled' %}
             <span class="tag tag-danger">已取消</span>
         {% else %}
             <span class="tag tag-muted">草稿</span>
+        {% endif %}
+        {% if activity.require_review %}
+            <span class="tag tag-info">需审核</span>
         {% endif %}
     </div>
 
@@ -27,13 +32,20 @@
         <div><strong>报名截止:</strong>
             {{ activity.register_deadline.strftime('%Y-%m-%d %H:%M') if activity.register_deadline else '未定' }}
         </div>
+        {% if activity.eligibility %}
+        <div><strong>资格条件:</strong>{{ activity.eligibility }}</div>
+        {% endif %}
     </div>
 
     <div class="capacity-bar">
-        <div class="capacity-info">已报 {{ registered_count }} / {{ activity.capacity }} 人</div>
+        <div class="capacity-info">
+            已确定 {{ activity.confirmed_count }} / {{ activity.capacity }} 人
+            {% if activity.waitlist_count %} · 候补 {{ activity.waitlist_count }} 人{% endif %}
+            · 剩余 {{ activity.remaining }} 个名额
+        </div>
         <div class="capacity-track">
-            {% set pct = (registered_count * 100 / activity.capacity) if activity.capacity else 0 %}
-            <div class="capacity-fill {% if registered_count >= activity.capacity %}capacity-full{% endif %}"
+            {% set pct = (activity.confirmed_count * 100 / activity.capacity) if activity.capacity else 0 %}
+            <div class="capacity-fill {% if activity.is_full() %}capacity-full{% endif %}"
                  style="width: {{ pct }}%"></div>
         </div>
     </div>
@@ -45,24 +57,38 @@
 
     <div class="action-area">
         {% if session.get('role') == 'student' %}
-            {% if is_registered %}
-                <div class="alert alert-success">您已报名此活动</div>
+            {% if my_status == 'pending' %}
+                <div class="status-card status-pending">报名状态：待审核（等待教师审核您的申请）</div>
+            {% elif my_status == 'confirmed' %}
+                <div class="status-card status-confirmed">报名状态：正式参加（您已占有一个名额）</div>
                 <form action="{{ url_for('registration.cancel', activity_id=activity.id) }}" method="POST"
-                      onsubmit="return confirm('确定要取消报名吗?')">
+                      onsubmit="return confirm('确定要取消报名吗?取消后名额将自动释放给候补同学。')">
                     <button type="submit" class="btn btn-danger">取消报名</button>
                 </form>
-            {% elif activity.status == 'published' and registered_count < activity.capacity %}
+            {% elif my_status == 'waitlist' %}
+                <div class="status-card status-waitlist">报名状态：候补中（名额已满，您正在排队等待补位）</div>
+                <p class="hint">当前候补人数：{{ activity.waitlist_count }} 人。如有正式人员取消，系统将按排队顺序自动补位。</p>
+                <form action="{{ url_for('registration.cancel', activity_id=activity.id) }}" method="POST"
+                      onsubmit="return confirm('确定要退出候补队列吗?')">
+                    <button type="submit" class="btn btn-danger">退出候补</button>
+                </form>
+            {% elif activity.status == 'published' and not activity.is_full() %}
                 <form action="{{ url_for('registration.register', activity_id=activity.id) }}" method="POST"
                       onsubmit="return confirm('确定要报名此活动吗?')">
                     <button type="submit" class="btn btn-success btn-large">立即报名</button>
                 </form>
-            {% elif registered_count >= activity.capacity %}
-                <div class="alert alert-warning">本活动名额已满</div>
+            {% elif activity.status == 'published' and activity.is_full() %}
+                <form action="{{ url_for('registration.register', activity_id=activity.id) }}" method="POST"
+                      onsubmit="return confirm('名额已满，确定要进入候补队列吗?')">
+                    <button type="submit" class="btn btn-warning btn-large">名额已满，加入候补</button>
+                </form>
             {% else %}
                 <div class="alert alert-warning">该活动当前不可报名</div>
             {% endif %}
         {% elif session.get('role') == 'teacher' and session.get('user_id') == activity.teacher_id %}
             <div class="alert alert-info">这是您发布的活动</div>
+            <a href="{{ url_for('teacher.review_workbench', activity_id=activity.id) }}" class="btn btn-primary">审核工作台</a>
+            <a href="{{ url_for('teacher.roster', activity_id=activity.id) }}" class="btn btn-link">报名名单</a>
         {% endif %}
     </div>
 

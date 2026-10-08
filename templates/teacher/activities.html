@@ -11,6 +11,7 @@
             <th>标题</th>
             <th>开始时间</th>
             <th>地点</th>
+            <th>名额看板</th>
             <th>状态</th>
             <th>操作</th>
         </tr>
@@ -21,13 +22,24 @@
             <td>{{ a.title }}</td>
             <td>{{ a.start_time.strftime('%Y-%m-%d %H:%M') if a.start_time else '未定' }}</td>
             <td>{{ a.location or '' }}</td>
+            <td class="board-cell">
+                已确定 <strong>{{ a.confirmed_count }}</strong> / {{ a.capacity }}
+                · 剩余 <strong>{{ a.remaining }}</strong>
+                · 候补 <strong>{{ a.waitlist_count }}</strong>
+                {% if a.require_review %}<span class="tag tag-info">需审核</span>{% endif %}
+            </td>
             <td>
                 {% if a.status == 'published' %}<span class="tag tag-success">已发布</span>
                 {% elif a.status == 'closed' %}<span class="tag tag-muted">已结束</span>
+                {% elif a.status == 'delisted' %}<span class="tag tag-danger">已下架</span>
                 {% elif a.status == 'cancelled' %}<span class="tag tag-danger">已取消</span>
                 {% else %}<span class="tag tag-muted">{{ a.status }}</span>{% endif %}
             </td>
-            <td><a href="{{ url_for('activity.detail', activity_id=a.id) }}" class="btn btn-link">查看</a></td>
+            <td>
+                <a href="{{ url_for('activity.detail', activity_id=a.id) }}" class="btn btn-link">查看</a>
+                <a href="{{ url_for('teacher.review_workbench', activity_id=a.id) }}" class="btn btn-link">审核台</a>
+                <a href="{{ url_for('teacher.roster', activity_id=a.id) }}" class="btn btn-link">名单</a>
+            </td>
         </tr>
         {% endfor %}
     </tbody>

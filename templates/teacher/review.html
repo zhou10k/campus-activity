@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}审核工作台 - {{ activity.title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>审核工作台 · {{ activity.title }}</h2>
+    <a href="{{ url_for('teacher.my_activities') }}" class="btn btn-link">&laquo; 返回我的发布</a>
+</div>
+
+<div class="board-summary">
+    <div class="board-item">
+        <span class="board-num">{{ activity.confirmed_count }}</span>
+        <span class="board-label">已确定</span>
+    </div>
+    <div class="board-item">
+        <span class="board-num">{{ activity.remaining }}</span>
+        <span class="board-label">剩余名额</span>
+    </div>
+    <div class="board-item">
+        <span class="board-num">{{ activity.waitlist_count }}</span>
+        <span class="board-label">候补中</span>
+    </div>
+    <div class="board-item">
+        <span class="board-num">{{ pending|length }}</span>
+        <span class="board-label">待审核</span>
+    </div>
+</div>
+
+<h3>待审核申请（{{ pending|length }}）</h3>
+{% if pending %}
+<table class="data-table">
+    <thead>
+        <tr><th>学生</th><th>学号</th><th>提交时间</th><th>操作</th></tr>
+    </thead>
+    <tbody>
+        {% for reg in pending %}
+        <tr>
+            <td>{{ reg.student.name }}</td>
+            <td>{{ reg.student.account }}</td>
+            <td>{{ reg.registered_at.strftime('%Y-%m-%d %H:%M') if reg.registered_at else '' }}</td>
+            <td>
+                <form action="{{ url_for('teacher.review_decide', activity_id=activity.id, reg_id=reg.id) }}"
+                      method="POST" class="inline-form">
+                    <input type="text" name="reason" placeholder="拒绝时填写原因">
+                    <button type="submit" name="decision" value="approve" class="btn btn-success btn-small">通过</button>
+                    <button type="submit" name="decision" value="reject" class="btn btn-danger btn-small"
+                            onclick="return this.form.reason.value.trim() !== '' || (alert('拒绝时必须填写原因'), false)">
+                        拒绝
+                    </button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+    <div class="empty-state"><p>暂无待审核申请</p></div>
+{% endif %}
+
+<h3>正式名单（{{ confirmed|length }}）</h3>
+{% if confirmed %}
+<table class="data-table">
+    <thead><tr><th>学生</th><th>学号</th><th>状态</th></tr></thead>
+    <tbody>
+        {% for reg in confirmed %}
+        <tr><td>{{ reg.student.name }}</td><td>{{ reg.student.account }}</td>
+            <td><span class="tag tag-success">正式参加</span></td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+    <div class="empty-state"><p>暂无正式参加人员</p></div>
+{% endif %}
+
+<h3>候补队列（{{ waitlist|length }}）</h3>
+{% if waitlist %}
+<table class="data-table">
+    <thead><tr><th>候补序号</th><th>学生</th><th>学号</th><th>进入候补时间</th></tr></thead>
+    <tbody>
+        {% for reg in waitlist %}
+        <tr>
+            <td>第 {{ reg.waitlist_no }} 位</td>
+            <td>{{ reg.student.name }}</td>
+            <td>{{ reg.student.account }}</td>
+            <td>{{ reg.waitlist_at.strftime('%Y-%m-%d %H:%M') if reg.waitlist_at else '' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+    <div class="empty-state"><p>暂无候补人员</p></div>
+{% endif %}
+{% endblock %}
